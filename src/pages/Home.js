@@ -11,16 +11,20 @@ import { useAccount, useDisconnect, useSwitchNetwork } from "wagmi";
 import { writeContract } from "@wagmi/core";
 import Web3 from "web3";
 
+import TokenPrice from "../component/TokenPrice";
+import TransactionHistory from "../component/TransactionHistory";
+import TokenTransfers from "../component/TokenTransfers";
+
 function Home(props) {
   const { client } = props;
   const { chains, error, isLoading, pendingChainId, switchNetwork } =
     useSwitchNetwork();
-  const account = client.getAccount().address;
-  const chain = client.getNetwork();
+  const account = client?.getAccount()?.address || null;
+  const chain = client?.getNetwork();
   const { isConnected } = useAccount();
 
-  let chainId = chain.chain ? chain.chain.id : "";
-  var web3Obj = new Web3(client.wagmi.publicClient);
+  let chainId = chain?.chain ? chain.chain.id : "";
+  var web3Obj = client?.wagmi?.publicClient ? new Web3(client.wagmi.publicClient) : null;
 
   const [data, setData] = useState({
     flag: false,
@@ -394,6 +398,16 @@ function Home(props) {
 
       <section className="forms-section">
         <div className="container">
+          <div className="row">
+            <div className="col-md-12">
+              <TokenPrice tokenAddress={tokenAddress} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="forms-section">
+        <div className="container">
           <div className=" justify-content-center align-items-center">
             <div className="checkout-form-centre">
               <div className="checkout-login-step">
@@ -753,6 +767,26 @@ function Home(props) {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="forms-section">
+        <div className="container">
+          <div className="row">
+            <div className="col-md-12">
+              <TokenTransfers tokenAddress={tokenAddress} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="forms-section">
+        <div className="container">
+          <div className="row">
+            <div className="col-md-12">
+              <TransactionHistory walletAddress={isConnected ? account : null} />
             </div>
           </div>
         </div>

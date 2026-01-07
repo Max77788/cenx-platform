@@ -11,6 +11,13 @@ const logger = require("morgan");
 const passport = require("passport");
 const hpp = require("hpp");
 const httpStatus = require("http-status");
+// http-status v2+ uses different export format, ensure we have status codes
+const HTTP_STATUS = {
+  OK: 200,
+  NOT_FOUND: 404,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+};
 const otherHelper = require("./helper/others.helper");
 const { AddErrorToLogs } = require("./modules/bug/bugController");
 const changephoto = require("./helper/photomanipulate").changephoto;
@@ -72,7 +79,12 @@ app.use(function (req, res, next) {
 
 const routes = require("./routes/index");
 // Use Routes
-app.use("/api", routes);
+app.use("/api", (req, res, next) => {
+  if (req.path.startsWith("/token")) {
+    console.log("🌐 API REQUEST:", req.method, req.path, "Query:", req.query);
+  }
+  next();
+}, routes);
 app.use("/public/:w-:h/*", changephoto);
 app.use("/public", express.static(path.join(__dirname, "public")));
 // catch 404 and forward to error handler
@@ -88,7 +100,7 @@ app.use((err, req, res, next) => {
   if (err.status === 404) {
     return otherHelper.sendResponse(
       res,
-      httpStatus.NOT_FOUND,
+      HTTP_STATUS.NOT_FOUND,
       false,
       null,
       err,
@@ -97,20 +109,41 @@ app.use((err, req, res, next) => {
     );
   } else {
     console.log("\x1b[41m", err);
-    let path = req.baseUrl + req.route && req.route.path;
-    if (path.substr(path.length - 1) === "/") {
-      path = path.slice(0, path.length - 1);
-    }
+    // Use console.log (stdout) so it shows up reliably under concurrently
+    console.log("🚨 SERVER ERROR HANDLER:", {
+      method: req.method,
+      path: req.path,
+      query: req.query,
+      body: req.body,
+      errorName: err.name,
+      errorMessage: err.message,
+      errorStack: err.stack,
+    });
+
+    // NOTE: req.route may be undefined (e.g. 404s / middleware errors).
+    // Avoid touching req.route.path here; it can itself throw and turn 404s into 500s.
     err.method = req.method;
     err.path = req.path;
-    AddErrorToLogs(req, res, next, err);
+    
+    // Try to log error, but don't let it crash the response
+    try {
+      AddErrorToLogs(req, res, next, err);
+    } catch (logError) {
+      console.log("⚠️ Failed to log error to database:", logError.message);
+    }
+    
+    // Ensure we have a valid status code
+    const statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
+    console.log("🔧 Error handler: Using status code:", statusCode);
+    
     return otherHelper.sendResponse(
       res,
-      httpStatus.INTERNAL_SERVER_ERROR,
+      statusCode,
       false,
       null,
       err,
-      null,
+      // Provide a readable message so the frontend can show why it failed
+      err.message || "Internal Server Error",
       null
     );
   }

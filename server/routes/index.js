@@ -27,6 +27,14 @@ router.use("/bid", bidRoutes);
 
 //All route of histories
 const historyRoutes = require("./api/histories");
-router.use("/history", historyRoutes);                                                                                                                                                           																												
+router.use("/history", historyRoutes);
+
+//All route of transactions
+const transactionRoutes = require("./api/transactions");
+router.use("/transaction", transactionRoutes);
+
+//All route of tokens
+const tokenRoutes = require("./api/tokens");
+router.use("/token", tokenRoutes);
 
 module.exports = router;        

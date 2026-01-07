@@ -13,6 +13,7 @@ import Layout from "./layout/Layout";
 import Home from "./pages/Home";
 import Exchange from "./pages/Exchange";
 import { MetaMaskProvider } from "./hook";
+import ErrorBoundary from "./component/ErrorBoundary";
 
 const chains = [bsc];
 const projectId = "eaf4d7570223c6f49e21a36adeabc6a6";
@@ -24,7 +25,9 @@ const wagmiConfig = createConfig({
   connectors: w3mConnectors({ 
     projectId, 
     chains,
-    version: 2
+    version: 2,
+    enableEIP6963: true,
+    enableCoinbase: true,
   }),
   publicClient,
   webSocketPublicClient,
@@ -32,9 +35,8 @@ const wagmiConfig = createConfig({
 const ethereumClient = new EthereumClient(wagmiConfig, chains);
 
 function App() {
-
   return (
-    <>
+    <ErrorBoundary>
       <WagmiConfig config={wagmiConfig}>
         <MetaMaskProvider>
           <Routes>
@@ -52,15 +54,20 @@ function App() {
           </Routes>
         </MetaMaskProvider>
       </WagmiConfig>
-      <Web3Modal 
-        projectId={projectId} 
-        ethereumClient={ethereumClient}
-        themeMode="light"
-        themeVariables={{
-          '--w3m-z-index': '9999'
-        }}
-      />
-    </>
+      <ErrorBoundary>
+        <Web3Modal 
+          projectId={projectId} 
+          ethereumClient={ethereumClient}
+          themeMode="light"
+          themeVariables={{
+            '--w3m-z-index': '9999'
+          }}
+          enableAccountView={true}
+          enableNetworkView={true}
+          enableExplorer={false}
+        />
+      </ErrorBoundary>
+    </ErrorBoundary>
   );
 }
 

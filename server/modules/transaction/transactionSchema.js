@@ -44,6 +44,14 @@ const transactionSchema = new schema(
     gasUsed: {
       type: String,
     },
+    type: {
+      type: String,
+      enum: ["stake", "unstake", "emergencyUnstake", "harvest", "transfer", "approve"],
+      default: "transfer",
+    },
+    amount: {
+      type: String,
+    },
   },
   {
     timestamps: true,

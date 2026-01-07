@@ -102,6 +102,12 @@ otherHelper.parseFilters = (req, defaults, is_deleted) => {
 };
 
 otherHelper.sendResponse = (res, status, success, data, errors, msg, token) => {
+  // Validate status code
+  if (status === undefined || status === null || isNaN(status)) {
+    console.error("❌ sendResponse: Invalid status code:", status);
+    status = 500; // Default to 500 if status is invalid
+  }
+  
   const response = {};
   if (success !== null) response.success = success;
   if (data !== null) response.data = data;
